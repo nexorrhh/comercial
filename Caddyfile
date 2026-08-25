@@ -1,3 +1,0 @@
-cotizaciones.SUDOMINIO.com.ar {
-	reverse_proxy app:3000
-}

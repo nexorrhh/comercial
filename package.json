@@ -5,18 +5,22 @@
   "main": "server/index.js",
   "scripts": {
     "start": "node server/index.js",
-    "migrate": "node migration/import_excel.js",
-    "create-admin": "node migration/create_user.js"
+    "create-admin": "node migration/create_user.js",
+    "migrate-to-supabase": "node migration/migrate_to_supabase.js"
   },
   "dependencies": {
-    "bcryptjs": "^2.4.3",
-    "better-sqlite3": "^11.3.0",
+    "@supabase/supabase-js": "^2.45.4",
     "chart.js": "^4.5.1",
-    "connect-sqlite3": "^0.9.15",
+    "cookie-parser": "^1.4.6",
     "dotenv": "^16.4.5",
     "ejs": "^3.1.10",
     "express": "^4.21.0",
-    "express-session": "^1.18.0",
+    "pg": "^8.13.0"
+  },
+  "devDependencies": {
     "xlsx": "^0.18.5"
+  },
+  "engines": {
+    "node": ">=22"
   }
 }

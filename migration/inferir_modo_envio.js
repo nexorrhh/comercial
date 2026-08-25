@@ -7,7 +7,7 @@
 // Uso:
 //   node migration/inferir_modo_envio.js            (modo simulación: sólo informa)
 //   node migration/inferir_modo_envio.js --aplicar   (aplica los cambios)
-const db = require('../server/lib/db');
+const db = require('./legacySqliteDb');
 
 const aplicar = process.argv.includes('--aplicar');
 
@@ -26,7 +26,8 @@ const candidatas = db.prepare(`
 let mail = 0, portal = 0, ambiguas = 0, sinCoincidencia = 0;
 const update = db.prepare('UPDATE cotizaciones SET modo_entrega_id = ? WHERE id = ?');
 
-const tx = db.transaction(() => {
+db.exec('BEGIN');
+try {
   for (const fila of candidatas) {
     const texto = fila.observaciones.toLowerCase();
     const tieneMail = /\bmail\b/.test(texto);
@@ -45,8 +46,11 @@ const tx = db.transaction(() => {
     }
     sinCoincidencia += 1;
   }
-});
-tx();
+  db.exec('COMMIT');
+} catch (e) {
+  db.exec('ROLLBACK');
+  throw e;
+}
 
 console.log(`Filas con observaciones y sin modo de entrega: ${candidatas.length}`);
 console.log(`  -> Mail: ${mail}`);

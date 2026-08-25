@@ -1,126 +1,151 @@
--- Esquema del sistema de cotizaciones e indicadores ISO
-PRAGMA journal_mode = WAL;
-PRAGMA foreign_keys = ON;
-
-CREATE TABLE IF NOT EXISTS usuarios (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  username TEXT UNIQUE NOT NULL,
-  password_hash TEXT NOT NULL,
+-- Esquema del sistema de cotizaciones e indicadores ISO (Supabase / Postgres)
+--
+-- "perfiles" reemplaza a la vieja tabla "usuarios" de SQLite: el login y la
+-- contraseña ahora los maneja Supabase Auth (tabla auth.users, fuera de este
+-- schema). Acá sólo se guarda el perfil de negocio (rol, nombre, activo) de
+-- cada usuario ya autenticado, enlazado 1 a 1 con auth.users por uuid.
+CREATE TABLE IF NOT EXISTS perfiles (
+  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  email TEXT NOT NULL,
   nombre_completo TEXT NOT NULL,
   rol TEXT NOT NULL CHECK (rol IN ('admin','gerencia','comercial','lectura')),
-  activo INTEGER NOT NULL DEFAULT 1,
-  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+  activo BOOLEAN NOT NULL DEFAULT true,
+  creado_en TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS catalogo_categoria (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  id SERIAL PRIMARY KEY,
   nombre TEXT UNIQUE NOT NULL,
-  activo INTEGER NOT NULL DEFAULT 1
+  activo BOOLEAN NOT NULL DEFAULT true
 );
 
--- codigo NC se muestra como "No cotizamos" desde la Actualización 4 (antes "No cotizado");
--- el renombre para instalaciones ya existentes lo hace un UPDATE idempotente en db.js.
+-- codigo NC se muestra como "No cotizamos" (antes "No cotizado"); el
+-- renombre para instalaciones ya existentes lo hace un UPDATE idempotente en
+-- server/lib/db.js.
 CREATE TABLE IF NOT EXISTS catalogo_estado (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  id SERIAL PRIMARY KEY,
   codigo TEXT UNIQUE NOT NULL,
   nombre TEXT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS catalogo_cotizador (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  id SERIAL PRIMARY KEY,
   iniciales TEXT UNIQUE NOT NULL,
   nombre_completo TEXT,
-  activo INTEGER NOT NULL DEFAULT 1
+  activo BOOLEAN NOT NULL DEFAULT true
 );
 
--- Modo de entrega de la oferta (Mail / Portal / Otro). Se muestra en el listado
--- y en la ficha con la etiqueta "Cotiza por" (agregado en la Actualización 2,
--- renombrado en la Actualización 3).
+-- Modo de entrega de la oferta (Mail / Portal / Otro). Se muestra en el
+-- listado y en la ficha con la etiqueta "Cotiza por".
 CREATE TABLE IF NOT EXISTS catalogo_modo_entrega (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  id SERIAL PRIMARY KEY,
   nombre TEXT UNIQUE NOT NULL
 );
 
--- Tabla maestra de cotizaciones (reemplaza la hoja "VersionesDeObras-proyectos")
+-- Tabla maestra de cotizaciones. Las fechas se guardan como TEXT en formato
+-- ISO (YYYY-MM-DD) a propósito -así ordenan y comparan igual que en la base
+-- SQLite original, sin tener que reescribir ningún filtro de fecha.
 CREATE TABLE IF NOT EXISTS cotizaciones (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  id SERIAL PRIMARY KEY,
   fecha_recepcion TEXT,           -- fecha ISO (YYYY-MM-DD) - RECEPCIÓN PEDIDO
   nombre TEXT NOT NULL,           -- descripción de la obra/proyecto
-  cliente TEXT,                   -- razon_soci
-  fecha_limite TEXT,              -- fech_limit, ISO. En la ficha se muestra como "F. Presentación" (Actualización 3)
+  cliente TEXT,
+  fecha_limite TEXT,              -- fecha ISO. En la ficha se muestra como "F. Presentación"
   cotizador_id INTEGER REFERENCES catalogo_cotizador(id),
-  observaciones TEXT,             -- OBS
+  observaciones TEXT,
   comprador TEXT,
-  contacto_comprador TEXT,        -- Actualización 4: dato separado de "comprador", ej. contacto directo/teléfono/email
+  contacto_comprador TEXT,        -- dato separado de "comprador", ej. contacto directo/teléfono/email
   estado_id INTEGER REFERENCES catalogo_estado(id),
-  -- 0 = No, 1 = Sí, 2 = A otro proveedor (Actualización 3 agregó el valor 2;
-  -- antes era estrictamente 0/1). Los indicadores ISO sólo cuentan adjudicado = 1,
-  -- así que "a otro proveedor" queda correctamente afuera de "adjudicadas" sin
-  -- tocar ninguna consulta existente.
+  -- 0 = No, 1 = Sí, 2 = A otro proveedor. Los indicadores ISO sólo cuentan
+  -- adjudicado = 1, así que "a otro proveedor" queda correctamente afuera de
+  -- "adjudicadas" sin tocar ninguna consulta.
   adjudicado INTEGER NOT NULL DEFAULT 0,
   numero_oferta TEXT,
   ot TEXT,
   toneladas REAL,                 -- toneladas cotizadas
-  toneladas_ejecutadas REAL,       -- en la ficha se muestra como "Ton. Adjudicadas" (Actualización 3)
+  toneladas_ejecutadas REAL,       -- en la ficha se muestra como "Ton. Adjudicadas"
   categoria_id INTEGER REFERENCES catalogo_categoria(id),
-  responsable_comercial_id INTEGER REFERENCES usuarios(id), -- a quién le corresponde el seguimiento
-  modo_entrega_id INTEGER REFERENCES catalogo_modo_entrega(id), -- Actualización 2; etiqueta "Cotiza por" desde Actualización 3
-  -- Campos agregados en la Actualización 3:
+  responsable_comercial_id UUID REFERENCES perfiles(id), -- a quién le corresponde el seguimiento
+  modo_entrega_id INTEGER REFERENCES catalogo_modo_entrega(id), -- etiqueta "Cotiza por"
   monto_cotizado REAL,             -- Monto Cotizado
   monto_adjudicado REAL,           -- Monto Adjudicado
   moneda TEXT CHECK (moneda IS NULL OR moneda IN ('USD','ARS')),
   tipo_cotizacion TEXT CHECK (tipo_cotizacion IS NULL OR tipo_cotizacion IN ('Budget','Compra')),
   hora_cierre TEXT,                -- "HH:MM"
-  -- Actualización 11: porcentaje que se agrega sobre el costo para llegar al monto
-  -- cotizado (markup comercial). Numérico libre (admite decimales, ej. 12.5 = 12,5%).
-  -- Mismo criterio de edición que monto_cotizado/monto_adjudicado: sólo admin/gerencia.
+  -- Porcentaje que se agrega sobre el costo para llegar al monto cotizado
+  -- (markup comercial). Numérico libre (admite decimales, ej. 12.5 = 12,5%).
   porcentaje_mayor_costo REAL,
-  -- Revisiones (Actualización 5): cuando el cliente vuelve con una consulta sobre
-  -- una cotización ya cerrada, en vez de pisar la fila se crea una fila NUEVA con
-  -- todos los datos copiados, para no perder el rastro de cuántas veces se trabajó
-  -- en la misma oportunidad. "revision" arranca en 0 (carga original) y sube de a 1
-  -- por cada vuelta; "cotizacion_original_id" apunta siempre a la fila de revisión 0
-  -- (queda NULL en la fila original), así todas las revisiones de una misma
-  -- cotización quedan agrupadas. "motivo_revision" es el texto libre que explica de
-  -- qué se trató esa vuelta (ej. "Responder consultas del cliente").
+  -- Revisiones: cuando el cliente vuelve con una consulta sobre una
+  -- cotización ya cerrada, en vez de pisar la fila se crea una fila NUEVA con
+  -- todos los datos copiados, para no perder el rastro de cuántas veces se
+  -- trabajó en la misma oportunidad. "revision" arranca en 0 (carga
+  -- original) y sube de a 1 por cada vuelta; "cotizacion_original_id" apunta
+  -- siempre a la fila de revisión 0 (queda NULL en la fila original), así
+  -- todas las revisiones de una misma cotización quedan agrupadas.
+  -- "motivo_revision" es el texto libre que explica de qué se trató esa
+  -- vuelta (ej. "Responder consultas del cliente").
   revision INTEGER NOT NULL DEFAULT 0,
   motivo_revision TEXT,
   cotizacion_original_id INTEGER REFERENCES cotizaciones(id),
-  creado_por_id INTEGER REFERENCES usuarios(id),
-  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
-  actualizado_por_id INTEGER REFERENCES usuarios(id),
-  actualizado_en TEXT NOT NULL DEFAULT (datetime('now')),
-  origen TEXT DEFAULT 'app'       -- 'app', 'migracion_excel' o 'revision', para trazar el origen del dato
+  creado_por_id UUID REFERENCES perfiles(id),
+  creado_en TIMESTAMPTZ NOT NULL DEFAULT now(),
+  actualizado_por_id UUID REFERENCES perfiles(id),
+  actualizado_en TIMESTAMPTZ NOT NULL DEFAULT now(),
+  origen TEXT DEFAULT 'app'       -- 'app', 'migracion_excel', 'migracion_supabase' o 'revision'
 );
 
 CREATE INDEX IF NOT EXISTS idx_cotizaciones_categoria ON cotizaciones(categoria_id);
 CREATE INDEX IF NOT EXISTS idx_cotizaciones_estado ON cotizaciones(estado_id);
 CREATE INDEX IF NOT EXISTS idx_cotizaciones_fecha_limite ON cotizaciones(fecha_limite);
 CREATE INDEX IF NOT EXISTS idx_cotizaciones_responsable ON cotizaciones(responsable_comercial_id);
--- El índice de "cotizacion_original_id" (columna de la Actualización 5) se crea
--- desde server/lib/db.js, DESPUÉS de la migración que agrega la columna — así no
--- rompe en una base ya existente que todavía no la tiene cuando se corre este
--- schema.sql completo de punta a punta.
+CREATE INDEX IF NOT EXISTS idx_cotizaciones_original ON cotizaciones(cotizacion_original_id);
 
 -- Historial de cambios (auditoría) - un registro por CAMPO modificado
 CREATE TABLE IF NOT EXISTS historial_cambios (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  id SERIAL PRIMARY KEY,
   cotizacion_id INTEGER NOT NULL REFERENCES cotizaciones(id) ON DELETE CASCADE,
-  usuario_id INTEGER REFERENCES usuarios(id),
+  usuario_id UUID REFERENCES perfiles(id),
   campo TEXT NOT NULL,
   valor_anterior TEXT,
   valor_nuevo TEXT,
   accion TEXT NOT NULL DEFAULT 'update', -- 'create' | 'update' | 'delete'
-  fecha TEXT NOT NULL DEFAULT (datetime('now'))
+  fecha TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE INDEX IF NOT EXISTS idx_historial_cotizacion ON historial_cambios(cotizacion_id);
 
 -- Registro de accesos (quién entró y cuándo) - útil para ISO también
 CREATE TABLE IF NOT EXISTS log_accesos (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  usuario_id INTEGER REFERENCES usuarios(id),
-  fecha TEXT NOT NULL DEFAULT (datetime('now')),
+  id SERIAL PRIMARY KEY,
+  usuario_id UUID REFERENCES perfiles(id),
+  fecha TIMESTAMPTZ NOT NULL DEFAULT now(),
   exito INTEGER NOT NULL DEFAULT 1,
   ip TEXT
 );
+
+-- Semilla mínima de catálogos fijos (no dependen de datos migrados).
+-- Idempotente: correr este schema.sql más de una vez no duplica filas.
+INSERT INTO catalogo_estado (codigo, nombre) VALUES
+  ('C', 'Cotizado'),
+  ('NC', 'No cotizamos'),
+  ('P', 'Pendiente')
+ON CONFLICT (codigo) DO NOTHING;
+
+INSERT INTO catalogo_modo_entrega (nombre) VALUES
+  ('Mail'),
+  ('Portal'),
+  ('Otro')
+ON CONFLICT (nombre) DO NOTHING;
+
+-- RLS habilitado como cinturón de seguridad extra: el backend usa la service
+-- role key (bypassea RLS) para todo el control de acceso real, que sigue
+-- viviendo en server/lib/permisos.js. Esto sólo protege ante un uso futuro
+-- accidental de la anon key directamente desde el navegador.
+ALTER TABLE perfiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE catalogo_categoria ENABLE ROW LEVEL SECURITY;
+ALTER TABLE catalogo_estado ENABLE ROW LEVEL SECURITY;
+ALTER TABLE catalogo_cotizador ENABLE ROW LEVEL SECURITY;
+ALTER TABLE catalogo_modo_entrega ENABLE ROW LEVEL SECURITY;
+ALTER TABLE cotizaciones ENABLE ROW LEVEL SECURITY;
+ALTER TABLE historial_cambios ENABLE ROW LEVEL SECURITY;
+ALTER TABLE log_accesos ENABLE ROW LEVEL SECURITY;

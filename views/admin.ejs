@@ -14,13 +14,13 @@
       <p class="meta" style="color:var(--text-secondary); font-size:0.85rem;">Acá se da de alta a quién puede entrar y con qué rol: <strong>admin</strong> (carga completa), <strong>gerencia</strong> (ve todo, edita seguimiento), <strong>comercial</strong> (edita sólo lo asignado) o <strong>lectura</strong> (solo consulta).</p>
       <div class="tabla-scroll" style="max-height: 40vh;">
         <table>
-          <thead><tr><th>Usuario</th><th>Nombre</th><th>Rol</th><th>Activo</th><th></th></tr></thead>
+          <thead><tr><th>Email</th><th>Nombre</th><th>Rol</th><th>Activo</th><th></th></tr></thead>
           <tbody id="tbody-usuarios"></tbody>
         </table>
       </div>
       <h4>Nuevo usuario</h4>
       <div class="grid-2">
-        <label class="campo-form">Usuario (login)<input type="text" id="u-username"></label>
+        <label class="campo-form">Email<input type="email" id="u-email"></label>
         <label class="campo-form">Nombre completo<input type="text" id="u-nombre"></label>
         <label class="campo-form">Contraseña<input type="password" id="u-password"></label>
         <label class="campo-form">Rol

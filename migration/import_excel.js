@@ -6,7 +6,7 @@
 const path = require('path');
 const fs = require('fs');
 const XLSX = require('xlsx');
-const db = require('../server/lib/db');
+const db = require('./legacySqliteDb');
 
 const [, , rutaArchivo, usernameImporta] = process.argv;
 
@@ -123,7 +123,8 @@ function main() {
   const filasParaRevisar = [];
   let importadas = 0;
 
-  const tx = db.transaction(() => {
+  db.exec('BEGIN');
+  try {
     for (const f of datos) {
       const [recepcion, nombre, cliente, fechaLimite, cotizaRaw, obs, comprador, estadoRaw, adjRaw, oferta, ot, ton, categoriaRaw] = f;
 
@@ -171,8 +172,11 @@ function main() {
       });
       importadas += 1;
     }
-  });
-  tx();
+    db.exec('COMMIT');
+  } catch (e) {
+    db.exec('ROLLBACK');
+    throw e;
+  }
 
   console.log(`Cotizaciones importadas: ${importadas}`);
   console.log(`Categorías distintas creadas en el catálogo: ${catCategoriaId.size}`);

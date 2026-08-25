@@ -2,7 +2,7 @@ async function cargarUsuarios() {
   const usuarios = await api('GET', '/api/usuarios');
   document.getElementById('tbody-usuarios').innerHTML = usuarios.map((u) => `
     <tr>
-      <td>${escapeHtml(u.username)}</td>
+      <td>${escapeHtml(u.email)}</td>
       <td>${escapeHtml(u.nombre_completo)}</td>
       <td>${escapeHtml(u.rol)}</td>
       <td>${u.activo ? 'Sí' : 'No'}</td>
@@ -35,12 +35,12 @@ async function crearUsuario() {
   errorEl.textContent = '';
   try {
     await api('POST', '/api/usuarios', {
-      username: document.getElementById('u-username').value.trim(),
+      email: document.getElementById('u-email').value.trim(),
       nombre_completo: document.getElementById('u-nombre').value.trim(),
       password: document.getElementById('u-password').value,
       rol: document.getElementById('u-rol').value,
     });
-    document.getElementById('u-username').value = '';
+    document.getElementById('u-email').value = '';
     document.getElementById('u-nombre').value = '';
     document.getElementById('u-password').value = '';
     cargarUsuarios();
