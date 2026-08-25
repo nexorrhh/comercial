@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Listado de cotizaciones · Cimomet</title>
+  <link rel="stylesheet" href="/css/estilo.css">
+</head>
+<body>
+  <%- include('partials/nav', { activo: 'listado' }) %>
+
+  <div class="contenedor">
+    <div class="tarjeta">
+      <div class="barra-filtros">
+        <div class="campo">
+          <label>Buscar</label>
+          <input type="text" id="f-q" placeholder="Obra, cliente, comprador, oferta...">
+        </div>
+        <div class="campo">
+          <label>Oferta</label>
+          <input type="text" id="f-oferta" placeholder="Nº de oferta">
+        </div>
+        <div class="campo">
+          <label>Estado</label>
+          <select id="f-estado"><option value="">Todos</option></select>
+        </div>
+        <div class="campo">
+          <label>Adjudicado</label>
+          <select id="f-adjudicado">
+            <option value="">Todos</option>
+            <option value="1">Sí</option>
+            <option value="0">No</option>
+            <option value="2">A otro proveedor</option>
+          </select>
+        </div>
+        <div class="campo">
+          <label>Desde (f. presentación)</label>
+          <input type="date" id="f-desde">
+        </div>
+        <div class="campo">
+          <label>Hasta (f. presentación)</label>
+          <input type="date" id="f-hasta">
+        </div>
+        <button id="btn-filtrar">Filtrar</button>
+        <button id="btn-nueva" class="secundario">+ Nueva cotización</button>
+      </div>
+
+      <div class="tabla-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Rev</th>
+              <th>F. presentación</th>
+              <th>Hora de cierre</th>
+              <th>Cotiza por</th>
+              <th>Cliente</th>
+              <th>Obra</th>
+              <th>Categoría</th>
+              <th>Cotiza</th>
+              <th>Estado</th>
+              <th>Oferta</th>
+              <th>Ton</th>
+              <th>Motivo revisión</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-cotizaciones">
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <%- include('partials/modal-cotizacion') %>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/ficha.js"></script>
+  <script src="/js/listado.js"></script>
+</body>
+</html>

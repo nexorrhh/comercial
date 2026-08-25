@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Ingresar · Cotizaciones Cimomet</title>
+  <link rel="stylesheet" href="/css/estilo.css">
+</head>
+<body>
+  <div class="login-wrap">
+    <div class="login-caja">
+      <h1>Cotizaciones &amp; Indicadores ISO</h1>
+      <form method="post" action="/login">
+        <label for="username">Usuario</label>
+        <input type="text" id="username" name="username" autocomplete="username" required autofocus>
+        <label for="password">Contraseña</label>
+        <input type="password" id="password" name="password" autocomplete="current-password" required>
+        <button type="submit">Ingresar</button>
+      </form>
+      <% if (error) { %><p class="mensaje-error"><%= error %></p><% } %>
+    </div>
+  </div>
+</body>
+</html>

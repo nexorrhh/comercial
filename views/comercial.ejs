@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Comercial · Cotizaciones Cimomet</title>
+  <link rel="stylesheet" href="/css/estilo.css">
+</head>
+<body>
+  <%- include('partials/nav', { activo: 'comercial' }) %>
+
+  <div class="contenedor">
+    <div class="tarjeta">
+      <p class="meta" style="color:var(--text-secondary); font-size:0.85rem; margin-top:0;">
+        Cotizaciones en estado <strong>Cotizado</strong>, con F. Presentación desde 2026, todavía sin resolver.
+        Al pasar Adjudicado a "Sí" o "A otro proveedor" (desde acá o desde Listado), la fila se cierra sola y deja de aparecer en esta lista —
+        sigue viéndose normalmente en Listado, con su historial completo. Se muestra de la fecha más reciente a la más vieja.
+      </p>
+      <div class="barra-filtros">
+        <div class="campo">
+          <label>Cliente</label>
+          <input type="text" id="f-cliente">
+        </div>
+        <div class="campo">
+          <label>Oferta</label>
+          <input type="text" id="f-oferta" placeholder="Nº de oferta">
+        </div>
+        <div class="campo">
+          <label>Comprador</label>
+          <input type="text" id="f-comprador">
+        </div>
+        <button id="btn-filtrar">Filtrar</button>
+      </div>
+      <div class="tabla-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>F. presentación</th>
+              <th>Cliente</th>
+              <th>Obra</th>
+              <th>Categoría</th>
+              <th>Oferta</th>
+              <th>Rev</th>
+              <th>Cotizó</th>
+              <th>Toneladas</th>
+              <th>Moneda</th>
+              <th>Monto cotizado</th>
+              <th>Comprador</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-comercial">
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <%- include('partials/modal-cotizacion') %>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/ficha.js"></script>
+  <script src="/js/comercial.js"></script>
+</body>
+</html>

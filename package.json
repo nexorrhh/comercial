@@ -1,0 +1,22 @@
+{
+  "name": "cotizaciones-app",
+  "version": "1.0.0",
+  "description": "Sistema de seguimiento de cotizaciones e indicadores ISO - Cimomet",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "migrate": "node migration/import_excel.js",
+    "create-admin": "node migration/create_user.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "better-sqlite3": "^11.3.0",
+    "chart.js": "^4.5.1",
+    "connect-sqlite3": "^0.9.15",
+    "dotenv": "^16.4.5",
+    "ejs": "^3.1.10",
+    "express": "^4.21.0",
+    "express-session": "^1.18.0",
+    "xlsx": "^0.18.5"
+  }
+}

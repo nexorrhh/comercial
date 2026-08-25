@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Indicadores · Cotizaciones Cimomet</title>
+  <link rel="stylesheet" href="/css/estilo.css">
+</head>
+<body>
+  <%- include('partials/nav', { activo: 'indicadores' }) %>
+
+  <div class="contenedor">
+    <div class="tarjeta">
+      <h3>Totales por Cliente / Comprador</h3>
+      <p class="meta" style="color:var(--text-secondary); font-size:0.85rem; margin-top:0;">
+        Filtrá por Cliente, Comprador y/o un rango de F. Presentación (podés combinarlos como quieras) para ver
+        cuánto se cotizó y cuánto se adjudicó, en toneladas y en monto por moneda. Sin ningún filtro, te mostramos
+        los totales de toda la base.
+      </p>
+      <div class="barra-filtros">
+        <div class="campo">
+          <label>Cliente</label>
+          <input type="text" id="i-cliente" placeholder="Coincidencia parcial">
+        </div>
+        <div class="campo">
+          <label>Comprador</label>
+          <input type="text" id="i-comprador" placeholder="Coincidencia parcial">
+        </div>
+        <div class="campo">
+          <label>Desde (f. presentación)</label>
+          <input type="date" id="i-desde">
+        </div>
+        <div class="campo">
+          <label>Hasta (f. presentación)</label>
+          <input type="date" id="i-hasta">
+        </div>
+        <button id="btn-buscar">Buscar</button>
+      </div>
+
+      <p class="resumen-frase" id="i-frase"></p>
+
+      <div class="stat-tiles" id="i-stat-tiles"></div>
+
+      <div class="grid-2" style="margin-top:0.5rem;">
+        <div>
+          <h4>Monto cotizado</h4>
+          <div id="i-montos-cotizados"></div>
+        </div>
+        <div>
+          <h4>Monto adjudicado</h4>
+          <div id="i-montos-adjudicados"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/indicadores.js"></script>
+</body>
+</html>

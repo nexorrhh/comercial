@@ -1,0 +1,19 @@
+<div class="navbar">
+  <div class="marca">Cotizaciones · Cimomet</div>
+  <nav>
+    <a href="/" class="<%= activo === 'listado' ? 'activo' : '' %>">Listado</a>
+    <a href="/comercial" class="<%= activo === 'comercial' ? 'activo' : '' %>">Comercial</a>
+    <a href="/indicadores" class="<%= activo === 'indicadores' ? 'activo' : '' %>">Indicadores</a>
+    <a href="/dashboards" class="<%= activo === 'dashboards' ? 'activo' : '' %>">Tableros ISO</a>
+    <% if (usuario.rol === 'admin') { %>
+      <a href="/admin" class="<%= activo === 'admin' ? 'activo' : '' %>">Administración</a>
+    <% } %>
+  </nav>
+  <div class="usuario-chip">
+    <span><%= usuario.nombre_completo %></span>
+    <span class="rol-badge"><%= usuario.rol %></span>
+    <form method="post" action="/logout" style="margin:0;">
+      <button type="submit" class="secundario">Salir</button>
+    </form>
+  </div>
+</div>

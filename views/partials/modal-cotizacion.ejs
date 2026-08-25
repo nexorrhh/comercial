@@ -1,0 +1,122 @@
+<!-- Modal de alta/edición + historial. Compartido entre Listado y Comercial
+     (Actualización 6) — extraído a partial para no duplicar el formulario. -->
+<div class="modal-fondo" id="modal-fondo">
+  <div class="modal">
+    <h2 id="modal-titulo">Cotización</h2>
+    <form id="form-cotizacion">
+      <input type="hidden" id="c-id">
+      <div class="grid-2">
+        <label>Obra / descripción
+          <input type="text" id="c-nombre" required>
+        </label>
+        <label>Cliente
+          <input type="text" id="c-cliente">
+        </label>
+        <label>Fecha recepción pedido
+          <input type="date" id="c-fecha_recepcion">
+        </label>
+        <label>F. Presentación
+          <input type="date" id="c-fecha_limite">
+        </label>
+        <label>Revisión
+          <input type="text" id="c-revision" disabled>
+        </label>
+        <label>Motivo revisión
+          <input type="text" id="c-motivo_revision" placeholder="Ej: Responder consultas del cliente">
+        </label>
+        <label>Hora de cierre
+          <input type="time" id="c-hora_cierre">
+        </label>
+        <label>Comprador
+          <input type="text" id="c-comprador">
+        </label>
+        <label>Contacto comprador
+          <input type="text" id="c-contacto_comprador">
+        </label>
+        <label>Cotiza (responsable de cotizar)
+          <select id="c-cotizador_id"><option value="">-</option></select>
+        </label>
+        <label>Cotiza por
+          <select id="c-modo_entrega_id"><option value="">-</option></select>
+        </label>
+        <label>Categoría
+          <select id="c-categoria_id"><option value="">-</option></select>
+        </label>
+        <label>Estado
+          <select id="c-estado_id"><option value="">-</option></select>
+        </label>
+        <label>Adjudicado
+          <select id="c-adjudicado">
+            <option value="0">No</option>
+            <option value="1">Sí</option>
+            <option value="2">A otro proveedor</option>
+          </select>
+        </label>
+        <label>Número de oferta
+          <input type="text" id="c-numero_oferta">
+        </label>
+        <label>OT
+          <input type="text" id="c-ot">
+        </label>
+        <label>Toneladas cotizadas
+          <input type="number" step="0.01" id="c-toneladas">
+        </label>
+        <label>Ton. Adjudicadas
+          <input type="number" step="0.01" id="c-toneladas_ejecutadas">
+        </label>
+        <label>Tipo de cotización
+          <select id="c-tipo_cotizacion">
+            <option value="">-</option>
+            <option value="Budget">Budget</option>
+            <option value="Compra">Compra</option>
+          </select>
+        </label>
+        <label>Moneda
+          <select id="c-moneda">
+            <option value="">-</option>
+            <option value="USD">USD</option>
+            <option value="ARS">ARS</option>
+          </select>
+        </label>
+        <label>Monto Cotizado
+          <input type="text" inputmode="decimal" id="c-monto_cotizado" placeholder="0,00">
+        </label>
+        <label>Monto Adjudicado
+          <input type="text" inputmode="decimal" id="c-monto_adjudicado" placeholder="0,00">
+        </label>
+        <!-- Actualización 11: % que se agrega sobre el costo para llegar al monto
+             cotizado (markup comercial). Mismo criterio de permisos que los montos
+             (sólo admin/gerencia) y mismo formato con coma decimal. -->
+        <label>% Mayor costo
+          <input type="text" inputmode="decimal" id="c-porcentaje_mayor_costo" placeholder="0,00">
+        </label>
+        <label>Responsable de seguimiento (comercial)
+          <select id="c-responsable_comercial_id"><option value="">-</option></select>
+        </label>
+      </div>
+      <label>Observaciones
+        <textarea id="c-observaciones" rows="3"></textarea>
+      </label>
+      <p class="mensaje-error" id="modal-error"></p>
+      <div class="acciones-modal">
+        <div>
+          <button type="button" class="secundario" id="btn-cerrar-modal">Cerrar</button>
+          <button type="button" class="secundario" id="btn-nueva-revision" style="display:none;">Nueva revisión</button>
+          <button type="button" class="peligro" id="btn-borrar" style="display:none;">Eliminar</button>
+        </div>
+        <button type="submit" id="btn-guardar">Guardar</button>
+      </div>
+    </form>
+
+    <div id="seccion-revisiones" style="display:none; margin-top:1.5rem;">
+      <h3>Historial de revisiones</h3>
+      <p class="meta" style="color:var(--text-secondary); font-size:0.85rem;">Cada vez que se reabre esta cotización (por ejemplo, el cliente vuelve con una consulta) queda una fila nueva, sin pisar la anterior.</p>
+      <div id="lista-revisiones"></div>
+    </div>
+
+    <div id="seccion-historial" style="display:none; margin-top:1.5rem;">
+      <h3>Historial de cambios (de esta revisión)</h3>
+      <div id="lista-historial"></div>
+    </div>
+  </div>
+</div>

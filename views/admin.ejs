@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Administración · Cimomet</title>
+  <link rel="stylesheet" href="/css/estilo.css">
+</head>
+<body>
+  <%- include('partials/nav', { activo: 'admin' }) %>
+
+  <div class="contenedor">
+    <div class="tarjeta">
+      <h3>Usuarios</h3>
+      <p class="meta" style="color:var(--text-secondary); font-size:0.85rem;">Acá se da de alta a quién puede entrar y con qué rol: <strong>admin</strong> (carga completa), <strong>gerencia</strong> (ve todo, edita seguimiento), <strong>comercial</strong> (edita sólo lo asignado) o <strong>lectura</strong> (solo consulta).</p>
+      <div class="tabla-scroll" style="max-height: 40vh;">
+        <table>
+          <thead><tr><th>Usuario</th><th>Nombre</th><th>Rol</th><th>Activo</th><th></th></tr></thead>
+          <tbody id="tbody-usuarios"></tbody>
+        </table>
+      </div>
+      <h4>Nuevo usuario</h4>
+      <div class="grid-2">
+        <label class="campo-form">Usuario (login)<input type="text" id="u-username"></label>
+        <label class="campo-form">Nombre completo<input type="text" id="u-nombre"></label>
+        <label class="campo-form">Contraseña<input type="password" id="u-password"></label>
+        <label class="campo-form">Rol
+          <select id="u-rol">
+            <option value="admin">admin</option>
+            <option value="gerencia">gerencia</option>
+            <option value="comercial">comercial</option>
+            <option value="lectura">lectura</option>
+          </select>
+        </label>
+      </div>
+      <button id="btn-crear-usuario">Crear usuario</button>
+      <p class="mensaje-error" id="error-usuario"></p>
+    </div>
+
+    <div class="tarjeta">
+      <h3>Categorías (catálogo cerrado)</h3>
+      <p class="meta" style="color:var(--text-secondary); font-size:0.85rem;">Mantener este catálogo cerrado evita que vuelva a pasar lo de "Estructura" / "ESTRUCTURA" / "ESTRUCTURAS" contadas como cosas distintas.</p>
+      <div id="lista-categorias" style="margin-bottom:0.75rem;"></div>
+      <div class="barra-filtros">
+        <input type="text" id="nueva-categoria" placeholder="Nombre de categoría">
+        <button id="btn-crear-categoria">Agregar</button>
+      </div>
+    </div>
+
+    <div class="tarjeta">
+      <h3>Cotizadores</h3>
+      <div id="lista-cotizadores" style="margin-bottom:0.75rem;"></div>
+      <div class="barra-filtros">
+        <input type="text" id="nuevo-cotizador-iniciales" placeholder="Iniciales (ej. S.B.)">
+        <input type="text" id="nuevo-cotizador-nombre" placeholder="Nombre completo (opcional)">
+        <button id="btn-crear-cotizador">Agregar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/admin.js"></script>
+</body>
+</html>

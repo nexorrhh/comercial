@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Tableros ISO · Cimomet</title>
+  <link rel="stylesheet" href="/css/estilo.css">
+</head>
+<body>
+  <%- include('partials/nav', { activo: 'dashboards' }) %>
+
+  <div class="contenedor">
+    <div class="tarjeta">
+      <h3>Resumen general</h3>
+      <p class="meta" style="color:var(--text-secondary); font-size:0.85rem;">Totales de todo el sistema, sin filtrar por fecha.</p>
+      <div class="stat-tiles" id="stat-tiles"></div>
+    </div>
+
+    <div class="tarjeta">
+      <h3>Resumen por año</h3>
+      <p class="meta" style="color:var(--text-secondary); font-size:0.85rem;">
+        Cuánto se lleva cotizado y adjudicado en el año elegido (monto y toneladas, según F. Presentación).
+        Indicador permanente: se actualiza solo a medida que se cargan cotizaciones nuevas, sin depender del
+        filtro de fechas de arriba. Los montos se muestran separados por moneda (USD/ARS).
+      </p>
+      <div class="barra-filtros">
+        <div class="campo">
+          <label>Año</label>
+          <select id="ra-anio"></select>
+        </div>
+      </div>
+      <div class="stat-tiles" id="ra-stat-tiles"></div>
+      <div class="grid-2" style="margin-top:1rem;">
+        <div>
+          <h4>Monto cotizado por moneda</h4>
+          <div id="ra-tabla-montos-cotizados"></div>
+        </div>
+        <div>
+          <h4>Monto adjudicado por moneda</h4>
+          <div id="ra-tabla-montos-adjudicados"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tarjeta">
+      <h3>Toneladas cotizadas / adjudicadas / ejecutadas por mes</h3>
+      <p class="meta" style="color:var(--text-secondary); font-size:0.85rem;">Reemplaza a la hoja "GRAFICOS" del Excel — se recalcula solo, no depende de actualizar un pivot a mano. El filtro de fechas de acá abajo también se aplica al gráfico de "Tasa de adjudicación" de más abajo.</p>
+      <div class="barra-filtros">
+        <div class="campo">
+          <label>Desde (f. límite)</label>
+          <input type="date" id="d-desde">
+        </div>
+        <div class="campo">
+          <label>Hasta (f. límite)</label>
+          <input type="date" id="d-hasta">
+        </div>
+        <button id="d-btn-filtrar">Aplicar</button>
+      </div>
+      <div class="chart-wrap"><canvas id="chart-toneladas"></canvas></div>
+      <details style="margin-top:0.75rem;">
+        <summary>Ver datos en tabla</summary>
+        <div id="tabla-toneladas"></div>
+      </details>
+    </div>
+
+    <div class="tarjeta">
+      <h3>Tasa de adjudicación por categoría</h3>
+      <p class="meta" style="color:var(--text-secondary); font-size:0.85rem;">Reemplaza a la hoja "INDICADOR ISO" del Excel: cantidad de cotizaciones presentadas vs. adjudicadas por rubro. Usa el mismo filtro de fechas del gráfico de arriba.</p>
+      <p class="meta" id="nota-tasa" style="color:var(--text-muted); font-size:0.78rem;"></p>
+      <div class="chart-wrap" style="height:480px;"><canvas id="chart-tasa"></canvas></div>
+      <details style="margin-top:0.75rem;">
+        <summary>Ver datos en tabla</summary>
+        <div id="tabla-tasa"></div>
+      </details>
+    </div>
+  </div>
+
+  <script src="/vendor/chart.umd.min.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/dashboards.js"></script>
+</body>
+</html>
