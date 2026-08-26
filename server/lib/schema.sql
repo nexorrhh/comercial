@@ -15,6 +15,12 @@ CREATE TABLE IF NOT EXISTS comercial_perfiles (
   nombre_completo TEXT NOT NULL,
   rol TEXT NOT NULL CHECK (rol IN ('admin','gerencia','comercial','lectura')),
   activo BOOLEAN NOT NULL DEFAULT true,
+  -- true cuando el admin cargó el email real de la persona pero todavía no
+  -- tiene contraseña propia (ej. usuarios migrados con email de relleno, a
+  -- los que se les corrigió el email sin fijarles clave). Mientras esté en
+  -- true, el login le pide que cree su propia contraseña en vez de pedirle
+  -- una existente.
+  debe_crear_password BOOLEAN NOT NULL DEFAULT false,
   creado_en TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 

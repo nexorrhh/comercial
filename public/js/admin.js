@@ -6,8 +6,10 @@ async function cargarUsuarios() {
       <td>${escapeHtml(u.nombre_completo)}</td>
       <td>${escapeHtml(u.rol)}</td>
       <td>${u.activo ? 'Sí' : 'No'}</td>
+      <td>${u.debe_crear_password ? '<span class="pill pill-nc">Pendiente</span>' : 'OK'}</td>
       <td>
         <button class="secundario" data-toggle="${u.id}" data-activo="${u.activo}">${u.activo ? 'Desactivar' : 'Activar'}</button>
+        <button class="secundario" data-email="${u.id}" data-email-actual="${escapeHtml(u.email)}">Cambiar email</button>
         <button class="secundario" data-clave="${u.id}">Cambiar contraseña</button>
       </td>
     </tr>
@@ -20,12 +22,27 @@ async function cargarUsuarios() {
     });
   });
 
+  document.querySelectorAll('[data-email]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const nuevo = prompt('Email real para este usuario:', btn.dataset.emailActual);
+      if (!nuevo || nuevo === btn.dataset.emailActual) return;
+      try {
+        await api('PUT', `/api/usuarios/${btn.dataset.email}`, { email: nuevo.trim() });
+        alert('Email actualizado. Como no le pusiste una contraseña nueva, va a tener que crear la suya la próxima vez que intente entrar.');
+        cargarUsuarios();
+      } catch (e) {
+        alert(e.message);
+      }
+    });
+  });
+
   document.querySelectorAll('[data-clave]').forEach((btn) => {
     btn.addEventListener('click', async () => {
       const nueva = prompt('Nueva contraseña para este usuario:');
       if (!nueva) return;
       await api('PUT', `/api/usuarios/${btn.dataset.clave}`, { password: nueva });
       alert('Contraseña actualizada.');
+      cargarUsuarios();
     });
   });
 }
