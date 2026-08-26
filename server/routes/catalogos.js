@@ -9,7 +9,7 @@ router.post('/api/catalogos/categorias', requireRole('admin'), async (req, res) 
   if (!nombre) return res.status(400).json({ error: 'Falta el nombre' });
   try {
     const { rows } = await db.query(
-      'INSERT INTO catalogo_categoria (nombre) VALUES ($1) RETURNING id',
+      'INSERT INTO comercial_catalogo_categoria (nombre) VALUES ($1) RETURNING id',
       [nombre.trim()],
     );
     res.status(201).json({ id: rows[0].id });
@@ -23,7 +23,7 @@ router.post('/api/catalogos/cotizadores', requireRole('admin'), async (req, res)
   if (!iniciales) return res.status(400).json({ error: 'Faltan las iniciales' });
   try {
     const { rows } = await db.query(
-      'INSERT INTO catalogo_cotizador (iniciales, nombre_completo) VALUES ($1, $2) RETURNING id',
+      'INSERT INTO comercial_catalogo_cotizador (iniciales, nombre_completo) VALUES ($1, $2) RETURNING id',
       [iniciales.trim(), nombre_completo || null],
     );
     res.status(201).json({ id: rows[0].id });

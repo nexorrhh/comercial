@@ -8,7 +8,7 @@ const router = express.Router();
 // Sólo el admin gestiona usuarios (altas/roles).
 router.get('/api/usuarios', requireRole('admin'), async (req, res) => {
   const { rows } = await db.query(
-    'SELECT id, email, nombre_completo, rol, activo, creado_en FROM perfiles ORDER BY nombre_completo',
+    'SELECT id, email, nombre_completo, rol, activo, creado_en FROM comercial_perfiles ORDER BY nombre_completo',
   );
   res.json(rows);
 });
@@ -33,7 +33,7 @@ router.post('/api/usuarios', requireRole('admin'), async (req, res) => {
 
   try {
     await db.query(
-      'INSERT INTO perfiles (id, email, nombre_completo, rol) VALUES ($1, $2, $3, $4)',
+      'INSERT INTO comercial_perfiles (id, email, nombre_completo, rol) VALUES ($1, $2, $3, $4)',
       [data.user.id, email, nombre_completo, rol],
     );
   } catch (e) {
@@ -46,12 +46,12 @@ router.post('/api/usuarios', requireRole('admin'), async (req, res) => {
 
 router.put('/api/usuarios/:id', requireRole('admin'), async (req, res) => {
   const { nombre_completo, rol, activo, password } = req.body;
-  const { rows } = await db.query('SELECT * FROM perfiles WHERE id = $1', [req.params.id]);
+  const { rows } = await db.query('SELECT * FROM comercial_perfiles WHERE id = $1', [req.params.id]);
   const existente = rows[0];
   if (!existente) return res.status(404).json({ error: 'No encontrado' });
 
   await db.query(
-    `UPDATE perfiles SET
+    `UPDATE comercial_perfiles SET
        nombre_completo = COALESCE($1, nombre_completo),
        rol = COALESCE($2, rol),
        activo = COALESCE($3, activo)

@@ -54,7 +54,7 @@ async function migrarUsuarios() {
     }
 
     await db.query(
-      `INSERT INTO perfiles (id, email, nombre_completo, rol, activo, creado_en)
+      `INSERT INTO comercial_perfiles (id, email, nombre_completo, rol, activo, creado_en)
        VALUES ($1, $2, $3, $4, $5, $6)`,
       [data.user.id, email, u.nombre_completo, u.rol, Boolean(u.activo), u.creado_en],
     );
@@ -67,21 +67,23 @@ async function migrarUsuarios() {
   return { mapaIds, credenciales };
 }
 
-async function migrarCatalogo(tabla, columnas) {
-  const filas = legacyDb.prepare(`SELECT * FROM ${tabla} ORDER BY id`).all();
+// tablaLegacy: nombre en la SQLite vieja (sin prefijo, no cambia nunca).
+// tablaNueva: nombre en Supabase (con el prefijo comercial_).
+async function migrarCatalogo(tablaLegacy, tablaNueva, columnas) {
+  const filas = legacyDb.prepare(`SELECT * FROM ${tablaLegacy} ORDER BY id`).all();
   for (const f of filas) {
     const valores = columnas.map((c) => f[c]);
     const placeholders = columnas.map((_, i) => `$${i + 2}`).join(', ');
     await db.query(
-      `INSERT INTO ${tabla} (id, ${columnas.join(', ')}) VALUES ($1, ${placeholders})
+      `INSERT INTO ${tablaNueva} (id, ${columnas.join(', ')}) VALUES ($1, ${placeholders})
        ON CONFLICT (id) DO NOTHING`,
       [f.id, ...valores],
     );
   }
   if (filas.length > 0) {
-    await db.query(`SELECT setval(pg_get_serial_sequence('${tabla}', 'id'), (SELECT MAX(id) FROM ${tabla}))`);
+    await db.query(`SELECT setval(pg_get_serial_sequence('${tablaNueva}', 'id'), (SELECT MAX(id) FROM ${tablaNueva}))`);
   }
-  console.log(`${tabla}: ${filas.length} filas`);
+  console.log(`${tablaNueva}: ${filas.length} filas`);
   return filas.length;
 }
 
@@ -106,15 +108,15 @@ async function migrarCotizaciones(mapaIds) {
     });
     const placeholders = columnas.map((_, i) => `$${i + 2}`).join(', ');
     await db.query(
-      `INSERT INTO cotizaciones (id, ${columnas.join(', ')}) VALUES ($1, ${placeholders})
+      `INSERT INTO comercial_cotizaciones (id, ${columnas.join(', ')}) VALUES ($1, ${placeholders})
        ON CONFLICT (id) DO NOTHING`,
       [f.id, ...valores],
     );
   }
   if (filas.length > 0) {
-    await db.query("SELECT setval(pg_get_serial_sequence('cotizaciones', 'id'), (SELECT MAX(id) FROM cotizaciones))");
+    await db.query("SELECT setval(pg_get_serial_sequence('comercial_cotizaciones', 'id'), (SELECT MAX(id) FROM comercial_cotizaciones))");
   }
-  console.log(`cotizaciones: ${filas.length} filas`);
+  console.log(`comercial_cotizaciones: ${filas.length} filas`);
   return filas.length;
 }
 
@@ -122,29 +124,29 @@ async function migrarHistorialYAccesos(mapaIds) {
   const historial = legacyDb.prepare('SELECT * FROM historial_cambios ORDER BY id').all();
   for (const h of historial) {
     await db.query(
-      `INSERT INTO historial_cambios (id, cotizacion_id, usuario_id, campo, valor_anterior, valor_nuevo, accion, fecha)
+      `INSERT INTO comercial_historial_cambios (id, cotizacion_id, usuario_id, campo, valor_anterior, valor_nuevo, accion, fecha)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8) ON CONFLICT (id) DO NOTHING`,
       [h.id, h.cotizacion_id, h.usuario_id == null ? null : mapaIds.get(h.usuario_id) || null,
         h.campo, h.valor_anterior, h.valor_nuevo, h.accion, h.fecha],
     );
   }
   if (historial.length > 0) {
-    await db.query("SELECT setval(pg_get_serial_sequence('historial_cambios', 'id'), (SELECT MAX(id) FROM historial_cambios))");
+    await db.query("SELECT setval(pg_get_serial_sequence('comercial_historial_cambios', 'id'), (SELECT MAX(id) FROM comercial_historial_cambios))");
   }
-  console.log(`historial_cambios: ${historial.length} filas`);
+  console.log(`comercial_historial_cambios: ${historial.length} filas`);
 
   const accesos = legacyDb.prepare('SELECT * FROM log_accesos ORDER BY id').all();
   for (const a of accesos) {
     await db.query(
-      `INSERT INTO log_accesos (id, usuario_id, fecha, exito, ip) VALUES ($1, $2, $3, $4, $5)
+      `INSERT INTO comercial_log_accesos (id, usuario_id, fecha, exito, ip) VALUES ($1, $2, $3, $4, $5)
        ON CONFLICT (id) DO NOTHING`,
       [a.id, a.usuario_id == null ? null : mapaIds.get(a.usuario_id) || null, a.fecha, a.exito, a.ip],
     );
   }
   if (accesos.length > 0) {
-    await db.query("SELECT setval(pg_get_serial_sequence('log_accesos', 'id'), (SELECT MAX(id) FROM log_accesos))");
+    await db.query("SELECT setval(pg_get_serial_sequence('comercial_log_accesos', 'id'), (SELECT MAX(id) FROM comercial_log_accesos))");
   }
-  console.log(`log_accesos: ${accesos.length} filas`);
+  console.log(`comercial_log_accesos: ${accesos.length} filas`);
 
   return { historial: historial.length, accesos: accesos.length };
 }
@@ -155,10 +157,10 @@ async function main() {
 
   console.log('--- Migrando catálogos ---');
   const conteos = {};
-  conteos.categorias = await migrarCatalogo('catalogo_categoria', ['nombre', 'activo']);
-  conteos.estados = await migrarCatalogo('catalogo_estado', ['codigo', 'nombre']);
-  conteos.cotizadores = await migrarCatalogo('catalogo_cotizador', ['iniciales', 'nombre_completo', 'activo']);
-  conteos.modos_entrega = await migrarCatalogo('catalogo_modo_entrega', ['nombre']);
+  conteos.categorias = await migrarCatalogo('catalogo_categoria', 'comercial_catalogo_categoria', ['nombre', 'activo']);
+  conteos.estados = await migrarCatalogo('catalogo_estado', 'comercial_catalogo_estado', ['codigo', 'nombre']);
+  conteos.cotizadores = await migrarCatalogo('catalogo_cotizador', 'comercial_catalogo_cotizador', ['iniciales', 'nombre_completo', 'activo']);
+  conteos.modos_entrega = await migrarCatalogo('catalogo_modo_entrega', 'comercial_catalogo_modo_entrega', ['nombre']);
 
   console.log('--- Migrando cotizaciones ---');
   conteos.cotizaciones = await migrarCotizaciones(mapaIds);

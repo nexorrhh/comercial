@@ -30,7 +30,7 @@ async function obtenerUsuarioDesdeCookies(req, res) {
   if (!authUser) return null;
 
   const { rows } = await db.query(
-    'SELECT id, email, nombre_completo, rol, activo FROM perfiles WHERE id = $1',
+    'SELECT id, email, nombre_completo, rol, activo FROM comercial_perfiles WHERE id = $1',
     [authUser.id],
   );
   const perfil = rows[0];

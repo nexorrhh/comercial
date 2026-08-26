@@ -29,12 +29,12 @@ const SELECT_BASE = `
     cz.iniciales AS cotizador_iniciales,
     me.nombre AS modo_entrega_nombre,
     u.nombre_completo AS responsable_comercial_nombre
-  FROM cotizaciones c
-  LEFT JOIN catalogo_categoria cat ON cat.id = c.categoria_id
-  LEFT JOIN catalogo_estado est ON est.id = c.estado_id
-  LEFT JOIN catalogo_cotizador cz ON cz.id = c.cotizador_id
-  LEFT JOIN catalogo_modo_entrega me ON me.id = c.modo_entrega_id
-  LEFT JOIN perfiles u ON u.id = c.responsable_comercial_id
+  FROM comercial_cotizaciones c
+  LEFT JOIN comercial_catalogo_categoria cat ON cat.id = c.categoria_id
+  LEFT JOIN comercial_catalogo_estado est ON est.id = c.estado_id
+  LEFT JOIN comercial_catalogo_cotizador cz ON cz.id = c.cotizador_id
+  LEFT JOIN comercial_catalogo_modo_entrega me ON me.id = c.modo_entrega_id
+  LEFT JOIN comercial_perfiles u ON u.id = c.responsable_comercial_id
 `;
 
 async function obtenerCotizacion(id) {
@@ -56,7 +56,7 @@ function idGrupoRevision(fila) {
 // GET /api/cotizaciones/:id/revisiones.
 const SOLO_ULTIMA_REVISION = `
   NOT EXISTS (
-    SELECT 1 FROM cotizaciones c2
+    SELECT 1 FROM comercial_cotizaciones c2
     WHERE COALESCE(c2.cotizacion_original_id, c2.id) = COALESCE(c.cotizacion_original_id, c.id)
       AND c2.revision > c.revision
   )
@@ -127,7 +127,7 @@ const FECHA_INICIO_COMERCIAL = '2026-01-01';
 
 router.get('/api/cotizaciones/comercial', async (req, res) => {
   const { cliente, oferta, comprador } = req.query;
-  const { rows: estadoRows } = await db.query("SELECT id FROM catalogo_estado WHERE codigo = 'C'");
+  const { rows: estadoRows } = await db.query("SELECT id FROM comercial_catalogo_estado WHERE codigo = 'C'");
   const estadoCotizado = estadoRows[0];
 
   const { params, ph } = creadorParams();
@@ -171,8 +171,8 @@ router.get('/api/cotizaciones/:id', async (req, res) => {
 router.get('/api/cotizaciones/:id/historial', async (req, res) => {
   const { rows } = await db.query(`
     SELECT h.*, u.nombre_completo AS usuario_nombre
-    FROM historial_cambios h
-    LEFT JOIN perfiles u ON u.id = h.usuario_id
+    FROM comercial_historial_cambios h
+    LEFT JOIN comercial_perfiles u ON u.id = h.usuario_id
     WHERE h.cotizacion_id = $1
     ORDER BY h.fecha DESC, h.id DESC
   `, [req.params.id]);
@@ -184,7 +184,7 @@ router.get('/api/cotizaciones/:id/historial', async (req, res) => {
 // cualquiera de las anteriores.
 router.get('/api/cotizaciones/:id/revisiones', async (req, res) => {
   const { rows: filaRows } = await db.query(
-    'SELECT id, cotizacion_original_id FROM cotizaciones WHERE id = $1',
+    'SELECT id, cotizacion_original_id FROM comercial_cotizaciones WHERE id = $1',
     [req.params.id],
   );
   const fila = filaRows[0];
@@ -212,13 +212,13 @@ router.post('/api/cotizaciones/:id/revisiones', async (req, res) => {
   const motivo = (req.body.motivo_revision || '').trim();
   if (!motivo) return res.status(400).json({ error: 'Falta indicar el motivo de la revisión' });
 
-  const { rows: existenteRows } = await db.query('SELECT * FROM cotizaciones WHERE id = $1', [req.params.id]);
+  const { rows: existenteRows } = await db.query('SELECT * FROM comercial_cotizaciones WHERE id = $1', [req.params.id]);
   const existente = existenteRows[0];
   if (!existente) return res.status(404).json({ error: 'No encontrada' });
 
   const grupoId = idGrupoRevision(existente);
   const { rows: maxRows } = await db.query(
-    'SELECT MAX(revision) AS max FROM cotizaciones WHERE COALESCE(cotizacion_original_id, id) = $1',
+    'SELECT MAX(revision) AS max FROM comercial_cotizaciones WHERE COALESCE(cotizacion_original_id, id) = $1',
     [grupoId],
   );
   const ultimaRevision = maxRows[0].max;
@@ -230,7 +230,7 @@ router.post('/api/cotizaciones/:id/revisiones', async (req, res) => {
   // copian tal cual estaban (decisión del usuario) — se ajustan a mano si
   // corresponde.
   const { rows: nuevaRows } = await db.query(`
-    INSERT INTO cotizaciones (
+    INSERT INTO comercial_cotizaciones (
       fecha_recepcion, nombre, cliente, fecha_limite, cotizador_id, observaciones,
       comprador, contacto_comprador, estado_id, adjudicado, numero_oferta, ot,
       toneladas, toneladas_ejecutadas, categoria_id, responsable_comercial_id,
@@ -277,7 +277,7 @@ router.post('/api/cotizaciones', async (req, res) => {
   const valores = columnas.map((c) => campos[c]);
   const placeholders = columnas.map((_, i) => `$${i + 1}`).join(', ');
   const { rows } = await db.query(`
-    INSERT INTO cotizaciones (${columnas.join(', ')}, creado_por_id, actualizado_por_id)
+    INSERT INTO comercial_cotizaciones (${columnas.join(', ')}, creado_por_id, actualizado_por_id)
     VALUES (${placeholders}, $${valores.length + 1}, $${valores.length + 1})
     RETURNING id
   `, [...valores, usuario.id]);
@@ -289,7 +289,7 @@ router.post('/api/cotizaciones', async (req, res) => {
 
 router.put('/api/cotizaciones/:id', async (req, res) => {
   const usuario = req.usuario;
-  const { rows: existenteRows } = await db.query('SELECT * FROM cotizaciones WHERE id = $1', [req.params.id]);
+  const { rows: existenteRows } = await db.query('SELECT * FROM comercial_cotizaciones WHERE id = $1', [req.params.id]);
   const existente = existenteRows[0];
   if (!existente) return res.status(404).json({ error: 'No encontrada' });
   if (!puedeEditarFila(usuario, existente)) {
@@ -305,7 +305,7 @@ router.put('/api/cotizaciones/:id', async (req, res) => {
   const valores = columnas.map((c) => campos[c]);
   const asignaciones = columnas.map((c, i) => `${c} = $${i + 1}`).join(', ');
   await db.query(`
-    UPDATE cotizaciones
+    UPDATE comercial_cotizaciones
     SET ${asignaciones}, actualizado_por_id = $${valores.length + 1}, actualizado_en = now()
     WHERE id = $${valores.length + 2}
   `, [...valores, usuario.id, req.params.id]);
@@ -324,22 +324,22 @@ router.put('/api/cotizaciones/:id', async (req, res) => {
 router.delete('/api/cotizaciones/:id', async (req, res) => {
   const usuario = req.usuario;
   if (!puedeBorrar(usuario.rol)) return res.status(403).json({ error: 'No tenés permiso para borrar' });
-  const { rows: existenteRows } = await db.query('SELECT * FROM cotizaciones WHERE id = $1', [req.params.id]);
+  const { rows: existenteRows } = await db.query('SELECT * FROM comercial_cotizaciones WHERE id = $1', [req.params.id]);
   if (!existenteRows[0]) return res.status(404).json({ error: 'No encontrada' });
 
   await registrarCambios(db, { cotizacionId: req.params.id, usuarioId: usuario.id, accion: 'delete' });
-  await db.query('DELETE FROM cotizaciones WHERE id = $1', [req.params.id]);
+  await db.query('DELETE FROM comercial_cotizaciones WHERE id = $1', [req.params.id]);
   res.json({ ok: true });
 });
 
 // Catálogos para poblar los combos del formulario
 router.get('/api/catalogos', async (req, res) => {
   const [categorias, estados, cotizadores, modosEntrega, usuarios] = await Promise.all([
-    db.query('SELECT * FROM catalogo_categoria WHERE activo = true ORDER BY nombre'),
-    db.query('SELECT * FROM catalogo_estado ORDER BY id'),
-    db.query('SELECT * FROM catalogo_cotizador WHERE activo = true ORDER BY iniciales'),
-    db.query('SELECT * FROM catalogo_modo_entrega ORDER BY id'),
-    db.query("SELECT id, nombre_completo, rol FROM perfiles WHERE activo = true ORDER BY nombre_completo"),
+    db.query('SELECT * FROM comercial_catalogo_categoria WHERE activo = true ORDER BY nombre'),
+    db.query('SELECT * FROM comercial_catalogo_estado ORDER BY id'),
+    db.query('SELECT * FROM comercial_catalogo_cotizador WHERE activo = true ORDER BY iniciales'),
+    db.query('SELECT * FROM comercial_catalogo_modo_entrega ORDER BY id'),
+    db.query("SELECT id, nombre_completo, rol FROM comercial_perfiles WHERE activo = true ORDER BY nombre_completo"),
   ]);
   res.json({
     categorias: categorias.rows,

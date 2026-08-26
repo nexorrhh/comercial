@@ -10,7 +10,7 @@ const router = express.Router();
 // revisión de cada grupo, igual que hace el listado por defecto.
 const SOLO_ULTIMA_REVISION = `
   NOT EXISTS (
-    SELECT 1 FROM cotizaciones c2
+    SELECT 1 FROM comercial_cotizaciones c2
     WHERE COALESCE(c2.cotizacion_original_id, c2.id) = COALESCE(c.cotizacion_original_id, c.id)
       AND c2.revision > c.revision
   )
@@ -43,7 +43,7 @@ router.get('/api/dashboards/toneladas', async (req, res) => {
       SUM(c.toneladas) AS toneladas_cotizadas,
       SUM(CASE WHEN c.adjudicado = 1 THEN c.toneladas ELSE 0 END) AS toneladas_adjudicadas,
       SUM(COALESCE(c.toneladas_ejecutadas, 0)) AS toneladas_ejecutadas
-    FROM cotizaciones c
+    FROM comercial_cotizaciones c
     WHERE ${cond.join(' AND ')}
     GROUP BY periodo
     ORDER BY periodo
@@ -75,8 +75,8 @@ router.get('/api/dashboards/tasa-adjudicacion', async (req, res) => {
       COUNT(*) AS total_cotizaciones,
       SUM(CASE WHEN c.adjudicado = 1 THEN 1 ELSE 0 END) AS adjudicadas,
       ROUND(100.0 * SUM(CASE WHEN c.adjudicado = 1 THEN 1 ELSE 0 END) / COUNT(*), 1) AS tasa_adjudicacion_pct
-    FROM cotizaciones c
-    LEFT JOIN catalogo_categoria cat ON cat.id = c.categoria_id
+    FROM comercial_cotizaciones c
+    LEFT JOIN comercial_catalogo_categoria cat ON cat.id = c.categoria_id
     ${where}
     GROUP BY grupo
     ORDER BY total_cotizaciones DESC
@@ -97,7 +97,7 @@ router.get('/api/dashboards/resumen', async (req, res) => {
       SUM(CASE WHEN adjudicado = 1 THEN 1 ELSE 0 END) AS total_adjudicadas,
       SUM(toneladas) AS toneladas_cotizadas,
       SUM(CASE WHEN adjudicado = 1 THEN toneladas ELSE 0 END) AS toneladas_adjudicadas
-    FROM cotizaciones c
+    FROM comercial_cotizaciones c
     WHERE ${SOLO_ULTIMA_REVISION}
   `);
   res.json(rows[0]);
@@ -118,7 +118,7 @@ async function totalesPorMoneda(campoMonto, condBase, params, condicionExtra) {
   cond.push(`${campoMonto} IS NOT NULL`);
   const { rows } = await db.query(`
     SELECT moneda, SUM(${campoMonto}) AS total
-    FROM cotizaciones c
+    FROM comercial_cotizaciones c
     WHERE ${cond.join(' AND ')}
     GROUP BY moneda
   `, params);
@@ -147,7 +147,7 @@ router.get('/api/dashboards/indicador-cliente-comprador', async (req, res) => {
       SUM(CASE WHEN c.adjudicado = 1 THEN 1 ELSE 0 END) AS cantidad_adjudicadas,
       SUM(c.toneladas) AS toneladas_cotizadas,
       SUM(CASE WHEN c.adjudicado = 1 THEN c.toneladas ELSE 0 END) AS toneladas_adjudicadas
-    FROM cotizaciones c
+    FROM comercial_cotizaciones c
     WHERE ${cond.join(' AND ')}
   `, params);
 
@@ -163,7 +163,7 @@ router.get('/api/dashboards/indicador-cliente-comprador', async (req, res) => {
 router.get('/api/dashboards/anios', async (req, res) => {
   const { rows } = await db.query(`
     SELECT DISTINCT substr(c.fecha_limite, 1, 4) AS anio
-    FROM cotizaciones c
+    FROM comercial_cotizaciones c
     WHERE c.fecha_limite IS NOT NULL AND c.fecha_limite != '' AND ${SOLO_ULTIMA_REVISION}
     ORDER BY anio DESC
   `);
@@ -185,7 +185,7 @@ router.get('/api/dashboards/resumen-anual', async (req, res) => {
       SUM(CASE WHEN c.adjudicado = 1 THEN 1 ELSE 0 END) AS cantidad_adjudicadas,
       SUM(c.toneladas) AS toneladas_cotizadas,
       SUM(CASE WHEN c.adjudicado = 1 THEN c.toneladas ELSE 0 END) AS toneladas_adjudicadas
-    FROM cotizaciones c
+    FROM comercial_cotizaciones c
     WHERE ${cond.join(' AND ')}
   `, params);
 

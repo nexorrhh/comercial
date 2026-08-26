@@ -44,7 +44,7 @@ async function main() {
   }
 
   await db.query(
-    `INSERT INTO perfiles (id, email, nombre_completo, rol, activo)
+    `INSERT INTO comercial_perfiles (id, email, nombre_completo, rol, activo)
      VALUES ($1, $2, $3, $4, true)
      ON CONFLICT (id) DO UPDATE SET email = $2, nombre_completo = $3, rol = $4, activo = true`,
     [userId, email, nombreCompleto, rol],

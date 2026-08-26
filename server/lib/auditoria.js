@@ -7,7 +7,7 @@ function normalizar(v) {
 
 async function insertarHistorial(client, { cotizacionId, usuarioId, campo, valorAnterior, valorNuevo, accion }) {
   await client.query(
-    `INSERT INTO historial_cambios (cotizacion_id, usuario_id, campo, valor_anterior, valor_nuevo, accion, fecha)
+    `INSERT INTO comercial_historial_cambios (cotizacion_id, usuario_id, campo, valor_anterior, valor_nuevo, accion, fecha)
      VALUES ($1, $2, $3, $4, $5, $6, now())`,
     [cotizacionId, usuarioId, campo, valorAnterior, valorNuevo, accion],
   );
