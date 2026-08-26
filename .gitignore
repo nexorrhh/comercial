@@ -1,7 +1,11 @@
 node_modules
-data/*.db
-data/*.db-shm
-data/*.db-wal
-data/*.json
 .env
 *.log
+
+# Bases de datos SQLite y backups (datos reales de la empresa: nunca a git,
+# menos con el repo público) - se excluyen en cualquier carpeta, no sólo data/.
+*.db
+*.db-shm
+*.db-wal
+*.db.bak/
+data/*.json
