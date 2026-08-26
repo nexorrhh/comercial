@@ -19,6 +19,9 @@ async function iniciar() {
 
   document.getElementById('btn-filtrar').addEventListener('click', cargarListado);
   document.getElementById('btn-nueva').addEventListener('click', () => abrirModal(null));
+  document.getElementById('btn-exportar').addEventListener('click', () => {
+    window.location.href = `/api/cotizaciones/export?${armarParamsFiltro().toString()}`;
+  });
 
   // Los combos de Estado y Adjudicado filtran solos apenas se elige una opción
   // (Actualización 2) — el botón "Filtrar" sigue haciendo falta sólo para el
@@ -47,7 +50,10 @@ function claseFecha(fila) {
   return '';
 }
 
-async function cargarListado() {
+// Junta los filtros activos en la barra en un URLSearchParams, compartido
+// entre cargarListado() y el botón de exportar a Excel para que el archivo
+// descargado respete exactamente lo que se está viendo en pantalla.
+function armarParamsFiltro() {
   const params = new URLSearchParams();
   const q = document.getElementById('f-q').value.trim();
   const oferta = document.getElementById('f-oferta').value.trim();
@@ -61,8 +67,11 @@ async function cargarListado() {
   if (adjudicado) params.set('adjudicado', adjudicado);
   if (desde) params.set('desde', desde);
   if (hasta) params.set('hasta', hasta);
+  return params;
+}
 
-  const filas = await api('GET', `/api/cotizaciones?${params.toString()}`);
+async function cargarListado() {
+  const filas = await api('GET', `/api/cotizaciones?${armarParamsFiltro().toString()}`);
   const tbody = document.getElementById('tbody-cotizaciones');
   tbody.innerHTML = filas.map((f) => `
     <tr data-id="${f.id}">

@@ -1,4 +1,5 @@
 const express = require('express');
+const XLSX = require('xlsx');
 const db = require('../lib/db');
 const { registrarCambios, registrarRevision } = require('../lib/auditoria');
 const {
@@ -75,10 +76,12 @@ function creadorParams() {
   };
 }
 
-// Listado con filtros (todos los roles logueados pueden ver todo, para dar visibilidad
-// a gerencia/comercial tal como se pidió).
-router.get('/api/cotizaciones', async (req, res) => {
-  const { categoria_id, estado_id, adjudicado, cotizador_id, modo_entrega_id, responsable_comercial_id, q, oferta, desde, hasta } = req.query;
+// Arma el WHERE + params del listado principal a partir de los query params
+// de filtro (compartido entre /api/cotizaciones y /api/cotizaciones/export
+// para que el Excel exportado respete exactamente los mismos filtros que se
+// ven en pantalla).
+function filtrosListado(query) {
+  const { categoria_id, estado_id, adjudicado, cotizador_id, modo_entrega_id, responsable_comercial_id, q, oferta, desde, hasta } = query;
   const { params, ph } = creadorParams();
   const cond = [SOLO_ULTIMA_REVISION];
 
@@ -103,7 +106,13 @@ router.get('/api/cotizaciones', async (req, res) => {
   // "Cotizada" cuando se tiene sólo el número de oferta a mano.
   if (oferta) cond.push(`c.numero_oferta ILIKE ${ph(`%${oferta}%`)}`);
 
-  const where = `WHERE ${cond.join(' AND ')}`;
+  return { where: `WHERE ${cond.join(' AND ')}`, params };
+}
+
+// Listado con filtros (todos los roles logueados pueden ver todo, para dar visibilidad
+// a gerencia/comercial tal como se pidió).
+router.get('/api/cotizaciones', async (req, res) => {
+  const { where, params } = filtrosListado(req.query);
   // Orden por defecto: F. Presentación de la más próxima a la menos próxima.
   // "(c.fecha_limite IS NULL)" antes que la fecha en sí asegura que las
   // cotizaciones sin fecha queden al final en vez de saltar al principio.
@@ -112,6 +121,54 @@ router.get('/api/cotizaciones', async (req, res) => {
     params,
   );
   res.json(rows);
+});
+
+// Convierte fecha_limite (Date/ISO string) a dd/mm/aaaa igual que fmtFecha en
+// el frontend, para que el Excel se lea igual que la columna del listado.
+function fmtFechaExport(valor) {
+  if (!valor) return '';
+  const iso = valor instanceof Date ? valor.toISOString() : String(valor);
+  const partes = iso.slice(0, 10).split('-');
+  if (partes.length !== 3) return iso;
+  return `${partes[2]}/${partes[1]}/${partes[0]}`;
+}
+
+const PILL_ESTADO_EXPORT = { C: 'Cotizado', NC: 'No cotizado', P: 'Pendiente' };
+
+// Exporta a Excel (.xlsx) el mismo listado que se ve en pantalla, respetando
+// los filtros activos. Reutiliza filtrosListado() para que nunca se
+// desincronice con lo que devuelve GET /api/cotizaciones.
+router.get('/api/cotizaciones/export', async (req, res) => {
+  const { where, params } = filtrosListado(req.query);
+  const { rows } = await db.query(
+    `${SELECT_BASE} ${where} ORDER BY (c.fecha_limite IS NULL) ASC, c.fecha_limite ASC, c.id DESC`,
+    params,
+  );
+
+  const datos = rows.map((f) => ({
+    Rev: f.revision ?? 0,
+    'F. presentación': fmtFechaExport(f.fecha_limite),
+    'Hora de cierre': f.hora_cierre || '',
+    'Cotiza por': f.modo_entrega_nombre || '',
+    Cliente: f.cliente || '',
+    Obra: f.nombre || '',
+    Categoría: f.categoria_nombre || '',
+    Cotiza: f.cotizador_iniciales || '',
+    Estado: f.estado_codigo ? (PILL_ESTADO_EXPORT[f.estado_codigo] || f.estado_codigo) : '',
+    Oferta: f.numero_oferta || '',
+    Ton: f.toneladas ?? '',
+    'Motivo revisión': f.motivo_revision || '',
+  }));
+
+  const hoja = XLSX.utils.json_to_sheet(datos);
+  const libro = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(libro, hoja, 'Cotizaciones');
+  const buffer = XLSX.write(libro, { type: 'buffer', bookType: 'xlsx' });
+
+  const fecha = new Date().toISOString().slice(0, 10);
+  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  res.setHeader('Content-Disposition', `attachment; filename="cotizaciones_${fecha}.xlsx"`);
+  res.send(buffer);
 });
 
 // Solapa "Comercial" — el subconjunto de cotizaciones que el equipo comercial
