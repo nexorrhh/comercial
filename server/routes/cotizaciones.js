@@ -151,6 +151,7 @@ router.get('/api/cotizaciones/export', async (req, res) => {
     'Hora de cierre': f.hora_cierre || '',
     'Cotiza por': f.modo_entrega_nombre || '',
     Cliente: f.cliente || '',
+    Comprador: f.comprador || '',
     Obra: f.nombre || '',
     Categoría: f.categoria_nombre || '',
     Cotiza: f.cotizador_iniciales || '',

@@ -80,6 +80,7 @@ async function cargarListado() {
       <td>${escapeHtml(f.hora_cierre)}</td>
       <td>${escapeHtml(f.modo_entrega_nombre)}</td>
       <td>${escapeHtml(f.cliente)}</td>
+      <td>${escapeHtml(f.comprador)}</td>
       <td>${escapeHtml(f.nombre)}</td>
       <td>${escapeHtml(f.categoria_nombre)}</td>
       <td>${escapeHtml(f.cotizador_iniciales)}</td>
