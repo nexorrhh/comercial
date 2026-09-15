@@ -67,8 +67,9 @@ CREATE TABLE IF NOT EXISTS comercial_cotizaciones (
   comprador TEXT,
   contacto_comprador TEXT,        -- dato separado de "comprador", ej. contacto directo/teléfono/email
   estado_id INTEGER REFERENCES comercial_catalogo_estado(id),
-  -- 0 = No, 1 = Sí, 2 = A otro proveedor. Los indicadores ISO sólo cuentan
-  -- adjudicado = 1, así que "a otro proveedor" queda correctamente afuera de
+  -- 0 = No, 1 = Sí, 2 = A otro proveedor, 3 = No adjudicada a cliente,
+  -- 4 = Obra en Stand By. Los indicadores ISO sólo cuentan adjudicado = 1,
+  -- así que el resto de los valores queda correctamente afuera de
   -- "adjudicadas" sin tocar ninguna consulta.
   adjudicado INTEGER NOT NULL DEFAULT 0,
   numero_oferta TEXT,

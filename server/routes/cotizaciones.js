@@ -87,8 +87,8 @@ function filtrosListado(query) {
 
   if (categoria_id) cond.push(`c.categoria_id = ${ph(Number(categoria_id))}`);
   if (estado_id) cond.push(`c.estado_id = ${ph(Number(estado_id))}`);
-  // adjudicado: 0 = No, 1 = Sí, 2 = A otro proveedor
-  if (adjudicado === '0' || adjudicado === '1' || adjudicado === '2') {
+  // adjudicado: 0 = No, 1 = Sí, 2 = A otro proveedor, 3 = No adjudicada a cliente, 4 = Obra en Stand By
+  if (['0', '1', '2', '3', '4'].includes(adjudicado)) {
     cond.push(`c.adjudicado = ${ph(Number(adjudicado))}`);
   }
   if (cotizador_id) cond.push(`c.cotizador_id = ${ph(Number(cotizador_id))}`);
@@ -176,11 +176,12 @@ router.get('/api/cotizaciones/export', async (req, res) => {
 // sigue activamente. Reglas fijas (decisión del usuario, no configurables
 // desde la UI): estado "Cotizado", F. Presentación desde 2026 en adelante
 // (las anteriores no tienen efecto en esta solapa), y todavía sin resolver
-// (Adjudicado en "No" o sin definir). En cuanto Adjudicado pasa a "Sí" o "A
-// otro proveedor" —desde esta solapa o desde Listado—, la fila deja de
-// cumplir esta condición y desaparece sola de acá (sigue viéndose
-// normalmente en Listado). Se muestran todas las cotizaciones que cumplen el
-// criterio, sin filtrar por a quién estén asignadas.
+// (Adjudicado en "No" o sin definir). En cuanto Adjudicado pasa a cualquier
+// otro valor ("Sí", "A otro proveedor", "No adjudicada a cliente" u "Obra en
+// Stand By") —desde esta solapa o desde Listado—, la fila deja de cumplir
+// esta condición y desaparece sola de acá (sigue viéndose normalmente en
+// Listado). Se muestran todas las cotizaciones que cumplen el criterio, sin
+// filtrar por a quién estén asignadas.
 const FECHA_INICIO_COMERCIAL = '2026-01-01';
 
 router.get('/api/cotizaciones/comercial', async (req, res) => {
