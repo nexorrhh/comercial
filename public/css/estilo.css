@@ -62,7 +62,7 @@ a { color: var(--series-1); }
   letter-spacing: 0.02em;
 }
 
-.contenedor { max-width: 1280px; margin: 0 auto; padding: 1.5rem; }
+.contenedor { max-width: min(1680px, 96vw); margin: 0 auto; padding: 1.5rem; }
 
 .tarjeta {
   background: var(--surface-1);
