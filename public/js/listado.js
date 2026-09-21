@@ -86,6 +86,7 @@ async function cargarListado() {
       <td>${escapeHtml(f.cotizador_iniciales)}</td>
       <td>${f.estado_codigo ? `<span class="pill ${PILL_ESTADO[f.estado_codigo] || ''}">${f.estado_codigo}</span>` : ''}</td>
       <td>${escapeHtml(f.numero_oferta)}</td>
+      <td>${escapeHtml(f.ot)}</td>
       <td>${f.toneladas ?? ''}</td>
       <td>${escapeHtml(f.motivo_revision)}</td>
     </tr>

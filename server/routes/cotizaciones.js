@@ -157,6 +157,7 @@ router.get('/api/cotizaciones/export', async (req, res) => {
     Cotiza: f.cotizador_iniciales || '',
     Estado: f.estado_codigo ? (PILL_ESTADO_EXPORT[f.estado_codigo] || f.estado_codigo) : '',
     Oferta: f.numero_oferta || '',
+    OT: f.ot || '',
     Ton: f.toneladas ?? '',
     'Motivo revisión': f.motivo_revision || '',
   }));
